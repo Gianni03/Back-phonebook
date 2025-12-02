@@ -1,6 +1,8 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
+const Phone = require('./models/phone')
 
 const app = express()
 app.use(express.json())
@@ -33,20 +35,23 @@ let persons = [
   }
 ]
 
-app.get('/api/persons', (req, res) => {
-  res.json(persons)
-  console.log(persons[1])
+
+app.get('/api/persons', (request, response) => {
+  Phone.find({}).then(phones => {
+    response.json(phones)
+  })
 })
 
-app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const person = persons.find(persons => persons.id === id)
-
-  if (person) {
-    res.json(person)
-  } else {
-    res.status(404).end()
-  }
+app.get('/api/persons/:id', (req, res, next) => {
+  Phone.findById(req.params.id)
+    .then(person => {
+      if (person) {
+        res.json(person)
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch(error => next(error))
 })
 
 app.delete('/api/persons/:id', (req, res) => {
@@ -59,41 +64,33 @@ app.delete('/api/persons/:id', (req, res) => {
 app.post('/api/persons', (req, res) => {
   const body = req.body
 
-  if (!body.name || !body.number) {
-    return res.status(400).json({ error: 'name or number missing' })
+  if (body.name === undefined) {
+    return res.status(400).json({ error: 'name missing' })
   }
 
-  const nameExists = persons.find(person => person.name === body.name)
-  if (nameExists) {
-    return res.status(400).json({
-      error: 'name must be unique'
-    })
-  }
-
-  const person = {
-    id: Math.floor(Math.random() * 1000000),
+  const phone = new Phone({
     name: body.name,
-    number: body.number
-  }
+    number: body.number,
+  })
 
-  persons = persons.concat(person)
-
-  res.json(person)
+  phone.save().then(savedPhone => {
+    res.json(savedPhone)
+  })
 })
 
 app.get('/info', (req, res) => {
-  const infoDate = new Date()
-
-  res.send(`
-    <p>Phonebook has info for ${persons.length} people</p>
-    <p>${infoDate}</p>
-  `)
-
+  Phone.countDocuments({}).then(count => {
+    const infoDate = new Date()
+    res.send(`
+      <p>Phonebook has info for ${count} people</p>
+      <p>${infoDate}</p>
+    `)
+  })
 })
 
 
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
