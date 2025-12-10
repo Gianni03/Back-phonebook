@@ -1,0 +1,36 @@
+import js from "@eslint/js";
+import globals from "globals";
+import stylistic from "@stylistic/eslint-plugin";
+import { defineConfig, globalIgnores } from "eslint/config";
+
+export default defineConfig([
+  js.configs.recommended,
+  stylistic.configs["recommended-flat"],
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: globals.node,
+    },
+  },
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  globalIgnores(['./dist/']),
+  {
+    rules: {
+      'eqeqeq': 'error',
+      'no-trailing-spaces': 'error',
+      'object-curly-spacing': ['error', 'always'],
+      'arrow-spacing': [
+        'error', { 'before': true, 'after': true }
+      ],
+      'no-console': 0
+    }
+  }
+
+
+]);
